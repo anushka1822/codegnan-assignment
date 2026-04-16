@@ -1,18 +1,49 @@
-# FastAPI API Key Management & Rate Limiting Service
+# 🛡️ FastAPI API Key Management & Rate Limiting Service
 
-## Project Overview
-This project is a high-performance backend service built with FastAPI designed specifically for generating, managing, and enforcing rate-limits on API Keys. It provides a robust and secure foundation for authenticating clients via custom HTTP headers and throttling requests to protect backend resources.
+A robust, high-performance backend service built with FastAPI designed for generating, securely managing, and enforcing rate-limits on API keys. This architecture provides a scalable foundation for authenticating clients via custom HTTP headers and throttling request volume to protect backend resources.
 
-## Tech Stack
+## 🚀 Live Demo & Testing
+
+- **Live Swagger UI**: [Insert Render URL Here]/docs
+
+### Postman Testing
+To dramatically reduce setup time and facilitate immediate testing, a complete `postman_collection.json` export is available in the root repository. 
+1. Download the `postman_collection.json` file from the root directory.
+2. Open Postman, click **Import** in the top left, and drop the file in. All endpoints will instantly populate with pre-configured schemas.
+
+## 🛠️ Tech Stack
 - **FastAPI**: Modern, fast web framework for building APIs.
-- **PostgreSQL**: Robust open-source relational database (configured with Neon DB).
+- **PostgreSQL**: Robust open-source relational database.
 - **SQLAlchemy (Async)**: Python SQL toolkit and Object Relational Mapper for handling database operations asynchronously.
-- **Pydantic**: Data validation and settings management applying Python type annotations.
-- **Uvicorn**: ASGI web server implementation for Python.
+- **Pydantic**: Data validation and settings management natively utilizing Python type annotations.
+- **Uvicorn**: Lightweight ASGI web server implementation.
 
-## Quick Start / Local Setup
+## 🗺️ API Endpoints
 
-Follow these steps to get the environment running locally:
+A fully interactive Swagger UI is automatically generated and accessible at `/docs` when the server is running.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/keys` | Generates a new cryptographically secure API key, stores it, and returns the one-time raw key. |
+| `GET`  | `/api/v1/resource/data` | Protected test route demonstrating authentication and tracking rate limits via injected dependencies. |
+| `GET`  | `/api/v1/keys` | Retrieves a paginated list of all generated API keys without exposing sensitive hashes. |
+| `GET`  | `/api/v1/keys/{id}` | Retrieves metadata for a specific API Key by its database ID. |
+
+## ✨ Extended Administrative Operations
+
+Going beyond standard generation and validation, comprehensive RESTful CRUD operations (`GET /keys` and `GET /keys/{id}`) were implemented to allow for robust administrative resource management. Crucially, the `GET /keys` endpoint natively implements **Pagination** via `skip` and `limit` query parameters. This ensures high database performance, minimized payload delivery, and scalable data retrieval regardless of how many thousands of keys are generated in the system.
+
+## 🏗️ Architecture Decisions & Scalability
+
+**Security & Database Lookups:** 
+API keys are generated cryptographically and immediately hashed using **SHA-256**. This deterministic hashing algorithm was purposely chosen over bcrypt. It allows the backend to validate incoming `X-API-Key` headers using lightning-fast, indexed database queries (`SELECT ... WHERE hashed_key=?`), completely sidestepping computationally expensive sequence comparisons required by non-deterministic hashes.
+
+**Rate Limiting:** 
+Currently, the rate limiting is handled purely via PostgreSQL to keep the deployment architecture contained, stateless, and exceptionally simple for Phase 1 deployments. However, for a high-throughput production environment, this tracking layer and its transactional commits on every hit would be migrated outward to an in-memory datastore like **Redis**. This effectively eliminates disk I/O bottlenecks and minimizes load on the primary relational database.
+
+## 💻 Quick Start / Local Setup
+
+Follow these steps to deploy the environment locally:
 
 1. **Clone the repository:**
    ```bash
@@ -23,10 +54,10 @@ Follow these steps to get the environment running locally:
 2. **Set up the virtual environment:**
    ```bash
    python -m venv env
-   env\Scripts\activate  # On Mac and Linux use `source env/bin/activate`
+   source env/bin/activate  # On Windows use `env\Scripts\activate`
    ```
 
-3. **Install the requirements:**
+3. **Install the dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
@@ -36,28 +67,9 @@ Follow these steps to get the environment running locally:
    ```bash
    cp .env.example .env
    ```
-   Ensure your `DATABASE_URL` in `.env` uses the `postgresql+asyncpg://` scheme. 
-   *(Example: `DATABASE_URL=postgresql+asyncpg://user:password@host/dbname?ssl=require`)*
+   *Ensure your `DATABASE_URL` in `.env` uses the `postgresql+asyncpg://` scheme (Example: `DATABASE_URL=postgresql+asyncpg://user:pass@host/dbname?ssl=require`).*
 
 5. **Start the application:**
    ```bash
    uvicorn main:app --reload
    ```
-
-## API Endpoints
-
-A fully interactive Swagger UI is automatically generated and accessible at `/docs` when the server is running.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/keys` | Generates a new API key, hashes and persists it securely, and returns the raw key. |
-| `GET`  | `/api/v1/resource/data` | A protected test route demonstrating authentication and incrementing rate limits via the injected dependency. |
-| `GET`  | `/health` | Basic application health check. |
-
-## Architecture Decisions & Future Scaling
-
-**Current Architecture:** 
-To keep the architecture simple, self-contained, and easily deployable, the rate limiting is securely handled directly via PostgreSQL. API keys are generated cryptographically and immediately hashed using **SHA-256**. This deterministic hashing algorithm is crucial because it allows the system to validate incoming `X-API-Key` headers via lightning-fast, indexed database queries (`SELECT ... WHERE hashed_key=?`), rather than computationally expensive full-table bcrypt checks.
-
-**Future Scaling:**
-While the PostgreSQL-driven approach handles moderate loads cleanly with zero additional moving parts, the current rate-limit update logic involves writing to the database on every authenticated request. For extremely high-throughput production environments, the rate-limiting context and counting variables should be migrated to an in-memory datastore like **Redis**. This would bypass disk I/O bottlenecks entirely, resulting in sub-millisecond rate-limit state management and significantly reducing the load on the primary transactional database while keeping PostgreSQL purely for persistent entity storage.

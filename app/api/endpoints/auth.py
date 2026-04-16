@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, status
+from typing import List
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.api.deps import get_db
-from app.schemas.api_key import ApiKeyCreate, ApiKeyCreateResponse
+from app.schemas.api_key import ApiKeyCreate, ApiKeyCreateResponse, ApiKeyResponse
 from app.models.api_key import ApiKey
 from app.core.security import generate_api_key, hash_api_key
 
@@ -37,3 +39,26 @@ async def create_api_key(
         last_request_timestamp=new_key.last_request_timestamp,
         raw_key=raw_key
     )
+
+@router.get("/keys", response_model=List[ApiKeyResponse])
+async def list_api_keys(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(ApiKey).offset(skip).limit(limit))
+    return result.scalars().all()
+
+@router.get("/keys/{key_id}", response_model=ApiKeyResponse)
+async def get_api_key(
+    key_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(ApiKey).where(ApiKey.id == key_id))
+    api_key_obj = result.scalars().first()
+    if not api_key_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="API key not found"
+        )
+    return api_key_obj
