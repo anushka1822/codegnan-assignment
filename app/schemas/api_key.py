@@ -15,3 +15,6 @@ class ApiKeyResponse(BaseModel):
     last_request_timestamp: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class ApiKeyCreateResponse(ApiKeyResponse):
+    raw_key: str
