@@ -4,7 +4,7 @@ A robust, high-performance backend service built with FastAPI designed for gener
 
 ## 🚀 Live Demo & Testing
 
-- **Live Swagger UI**: [Insert Render URL Here]/docs
+- **Live Swagger UI**: [Render URL](https://codegnan-assignment.onrender.com/docs)
 
 ### Postman Testing
 To dramatically reduce setup time and facilitate immediate testing, a complete `postman_collection.json` export is available in the root repository. 
