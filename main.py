@@ -5,7 +5,7 @@ import uvicorn
 from app.db.session import engine
 from app.db.base import Base
 import app.models.api_key  # Register models
-from app.api.endpoints import auth
+from app.api.endpoints import auth, resource
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,6 +21,7 @@ app = FastAPI(
 )
 
 app.include_router(auth.router, prefix="/api/v1", tags=["Auth"])
+app.include_router(resource.router, prefix="/api/v1/resource", tags=["Protected Resource"])
 
 @app.get("/health", tags=["Health"])
 async def health_check():
