@@ -47,8 +47,8 @@ Follow these steps to deploy the environment locally:
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repository-url>
-   cd <your-repository-directory>
+   git clone https://github.com/anushka1822/codegnan-assignment.git
+   cd codegnan-assignment
    ```
 
 2. **Set up the virtual environment:**
